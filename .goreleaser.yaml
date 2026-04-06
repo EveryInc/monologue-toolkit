@@ -1,0 +1,35 @@
+version: 2
+
+project_name: monologue
+
+builds:
+  - id: monologue
+    binary: monologue
+    main: ./cli/cmd/monologue
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - darwin
+      - linux
+      - windows
+    goarch:
+      - amd64
+      - arm64
+
+archives:
+  - id: monologue
+    builds:
+      - monologue
+    formats:
+      - tar.gz
+    format_overrides:
+      - goos: windows
+        formats:
+          - zip
+
+checksum:
+  name_template: checksums.txt
+
+release:
+  draft: true
+

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Monologue Notes"
+  short_description: "Read Monologue notes and transcripts with a Monologue Notes API token"
+  default_prompt: "Use the Monologue Notes skill to list notes, fetch transcripts, and summarize note content."
