@@ -10,6 +10,7 @@ import (
 
 	"github.com/EveryInc/monologue-toolkit/cli/internal/config"
 	"github.com/EveryInc/monologue-toolkit/cli/internal/monologue"
+	"github.com/EveryInc/monologue-toolkit/cli/internal/version"
 )
 
 func Run(args []string, stdin io.Reader, stdout io.Writer, stderr io.Writer) int {
@@ -19,6 +20,9 @@ func Run(args []string, stdin io.Reader, stdout io.Writer, stderr io.Writer) int
 	}
 
 	switch args[0] {
+	case "version", "--version":
+		fmt.Fprintln(stdout, version.String())
+		return 0
 	case "onboarding":
 		return runOnboarding(args[1:], stdin, stdout, stderr)
 	case "notes":
@@ -264,6 +268,7 @@ Usage:
   monologue notes <command> [flags]
 
 Commands:
+  version          Show the installed CLI version
   onboarding       Save and verify Monologue API credentials
   notes onboarding Alias for onboarding
   notes list       List one page of notes
@@ -273,6 +278,7 @@ Commands:
 Environment:
   MONOLOGUE_API_TOKEN
   MONOLOGUE_API_BASE_URL
+  MONOLOGUE_CONFIG_DIR
 `)
 }
 

@@ -3,7 +3,7 @@
 `monologue-toolkit` gives Monologue users two ways to work with their notes outside the app:
 
 - `monologue`, a CLI for the Monologue Notes public API
-- `monologue-notes`, an installable agent skill that uses the CLI from tools like Codex and Claude Code
+- `monologue-notes`, an installable agent skill for tools like Codex, Claude Code, and other terminal-capable agents
 
 Today, both are read-only and focused on the public Notes API:
 
@@ -20,25 +20,6 @@ Today, both are read-only and focused on the public Notes API:
 4. Start using `monologue notes ...`.
 5. If you use an agent, install the `monologue-notes` skill too.
 
-## What you can do
-
-With the CLI:
-
-```bash
-monologue notes list --limit 10
-monologue notes list --q "customer interview"
-monologue notes all --updated-after 2026-01-01T00:00:00Z
-monologue notes get NOTE_ID
-monologue notes get NOTE_ID --field transcript
-```
-
-With the skill, an agent can do things like:
-
-- pull your latest notes
-- search notes about a topic
-- fetch a transcript for a specific note
-- summarize notes without manually copying JSON around
-
 ## Get a Monologue API key
 
 Before the CLI or skill can access your notes, you need a Monologue Notes API key.
@@ -53,35 +34,51 @@ Keep the generated token somewhere safe. You will paste it into the CLI during o
 
 ## Install the CLI
 
-### Recommended today
+### macOS and Linux without Go
 
-The supported install path today is Go:
+Once the repo has a tagged GitHub release, the easiest install path is:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/EveryInc/monologue-toolkit/main/install.sh | sh
+```
+
+Install to a custom location:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/EveryInc/monologue-toolkit/main/install.sh | sh -s -- --install-dir /usr/local/bin
+```
+
+Install a specific version:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/EveryInc/monologue-toolkit/main/install.sh | sh -s -- --version v0.1.0
+```
+
+### Windows without Go
+
+Once the repo has a tagged GitHub release:
+
+```powershell
+irm https://raw.githubusercontent.com/EveryInc/monologue-toolkit/main/install.ps1 | iex
+```
+
+### With Go
+
+If you already have Go installed, you can still use:
 
 ```bash
 go install github.com/EveryInc/monologue-toolkit/cli/cmd/monologue@latest
 ```
 
-Make sure your Go bin directory is on `PATH`:
+If you use `go install`, make sure your Go bin directory is on `PATH`:
 
 ```bash
 export PATH="$PATH:$(go env GOPATH)/bin"
 ```
 
-Add that to `~/.zshrc` or your shell profile if needed.
+### If you are reading this before the first release
 
-### Build from a local checkout
-
-```bash
-git clone https://github.com/EveryInc/monologue-toolkit.git
-cd monologue-toolkit
-go build ./cli/cmd/monologue
-```
-
-### If you do not have Go
-
-Prebuilt releases are not wired up yet in this repo. For now, the CLI assumes Go is available.
-
-The next distribution step for this repo should be GitHub Releases with prebuilt binaries for macOS, Linux, and Windows. Until then, `go install` is the supported path.
+The no-Go install scripts rely on GitHub Releases. Until the first release is published, use `go install` or build from source.
 
 ## Onboard the CLI
 
@@ -111,89 +108,93 @@ monologue notes list --limit 5
 
 ## CLI commands
 
-### List notes
-
 ```bash
+monologue version
 monologue notes list --limit 10
-monologue notes list --q "design review"
-monologue notes list --created-after 2026-01-01T00:00:00Z
-```
-
-### Fetch every matching note across pagination
-
-```bash
-monologue notes all --q "customer"
-```
-
-### Fetch one note
-
-```bash
+monologue notes list --q "customer interview"
+monologue notes all --updated-after 2026-01-01T00:00:00Z
 monologue notes get NOTE_ID
-monologue notes get NOTE_ID --field summary
 monologue notes get NOTE_ID --field transcript
 ```
 
-### Help
+Use `monologue --help` and `monologue notes --help` for the full command list.
+
+## Update the CLI
+
+If you installed with the shell or PowerShell installer, rerun the same install command to get the latest release.
+
+If you installed with Go, rerun:
 
 ```bash
-monologue --help
-monologue notes --help
+go install github.com/EveryInc/monologue-toolkit/cli/cmd/monologue@latest
+```
+
+Check the installed version with:
+
+```bash
+monologue version
 ```
 
 ## Install the skill
 
-The skill lives in [`monologue-notes-skill/`](./monologue-notes-skill).
-
-The skill is intentionally simple:
-
-- it does not bundle a separate wrapper CLI anymore
-- it expects the `monologue` binary to already be installed
-- it tells the agent to run `monologue onboarding` if credentials are missing
-
-### Install in Codex locally
-
-Copy the skill into your Codex skills directory:
+The easiest `skills.sh` install path is:
 
 ```bash
-mkdir -p ~/.codex/skills
-cp -R ./monologue-notes-skill ~/.codex/skills/monologue-notes
+npx skills add https://github.com/EveryInc/monologue-toolkit --skill monologue-notes -g -y
 ```
 
-Then restart Codex.
+That installs the skill globally for supported agents.
+
+After installing the skill:
+
+1. Make sure the `monologue` CLI is already installed.
+2. Run `monologue onboarding` once.
+3. Restart your agent if it does not auto-refresh installed skills.
 
 ### Use the skill
 
-After restarting Codex, prompt it naturally:
+Prompt your agent naturally:
 
 - "Use the monologue-notes skill and pull my latest notes"
 - "Use monologue-notes to find notes about onboarding"
 - "Use monologue-notes to fetch the transcript from my latest customer interview note"
 
-### Other agents
+### Update the skill
 
-The skill is written to be terminal-first, so the same pattern works in other agents that can:
+Use the Skills CLI:
 
-- read a `SKILL.md`-style skill
-- run shell commands
-- call the installed `monologue` binary
-
-When this repo is published and indexed by a skill directory such as [skills.sh](https://skills.sh), use the `monologue-notes-skill/` folder as the installable skill path.
-
-## Current limitations
-
-- The public Notes API is currently read-only.
-- The current public API surface is notes list and note detail retrieval.
-- The nicest install path today still requires Go.
-- Prebuilt binaries and package-manager installs are not set up yet.
+```bash
+npx skills check
+npx skills update
+```
 
 ## Repository layout
 
 ```text
 monologue-toolkit/
 ├── cli/                     # Go source for the monologue CLI
-└── monologue-notes-skill/   # installable skill for terminal-capable agents
+└── skills/monologue-notes/  # installable skill package
 ```
 
-## Development notes
+## Maintainer release flow
 
-This repo includes a minimal [`.goreleaser.yaml`](./.goreleaser.yaml) so GitHub Releases can be added later without restructuring the project.
+This repo now includes:
+
+- `.github/workflows/ci.yml` for tests
+- `.github/workflows/release.yml` for tagged releases
+- `.goreleaser.yaml` for cross-platform CLI binaries
+- `install.sh` and `install.ps1` for no-Go installs
+
+To publish a release:
+
+1. Push a semver tag such as `v0.1.0`.
+2. GitHub Actions will build archives for macOS, Linux, and Windows.
+3. The workflow will publish a GitHub Release with checksums.
+
+After that, the no-Go install commands above will work for end users.
+
+## Current limitations
+
+- The public Notes API is currently read-only.
+- The current public API surface is notes list and note detail retrieval.
+- The no-Go installer depends on GitHub Releases existing for the requested version.

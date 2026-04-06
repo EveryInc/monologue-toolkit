@@ -8,6 +8,11 @@ builds:
     main: ./cli/cmd/monologue
     env:
       - CGO_ENABLED=0
+    ldflags:
+      - -s -w
+      - -X github.com/EveryInc/monologue-toolkit/cli/internal/version.Version={{ .Version }}
+      - -X github.com/EveryInc/monologue-toolkit/cli/internal/version.Commit={{ .Commit }}
+      - -X github.com/EveryInc/monologue-toolkit/cli/internal/version.Date={{ .Date }}
     goos:
       - darwin
       - linux
@@ -20,6 +25,7 @@ archives:
   - id: monologue
     builds:
       - monologue
+    name_template: "{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}"
     formats:
       - tar.gz
     format_overrides:
@@ -31,5 +37,5 @@ checksum:
   name_template: checksums.txt
 
 release:
-  draft: true
+  draft: false
 

@@ -2,18 +2,18 @@
 
 ## Preferred
 
+Install from GitHub Releases:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/EveryInc/monologue-toolkit/main/install.sh | sh
+```
+
+## Alternative
+
 Install with Go:
 
 ```bash
 go install github.com/EveryInc/monologue-toolkit/cli/cmd/monologue@latest
-```
-
-## Fallback
-
-Build from a local checkout:
-
-```bash
-go build ./cli/cmd/monologue
 ```
 
 ## Onboarding
@@ -36,3 +36,4 @@ Environment overrides still work when needed:
 export MONOLOGUE_API_TOKEN="mono_pat_..."
 export MONOLOGUE_API_BASE_URL="https://api.monologue.to"
 ```
+

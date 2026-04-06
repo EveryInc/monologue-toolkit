@@ -56,3 +56,4 @@ Returns the full note payload. The public response adds:
 - The public Notes API is currently read-only.
 - Pagination is cursor based.
 - `transcript_segments` should be treated as loosely typed JSON.
+

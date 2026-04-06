@@ -4,12 +4,25 @@ The `monologue` binary is a thin Go client for Monologue's public Notes API.
 
 ## Commands
 
+- `monologue version`
 - `monologue onboarding`
 - `monologue notes list`
 - `monologue notes all`
 - `monologue notes get NOTE_ID`
 
 ## Setup
+
+Install from GitHub Releases:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/EveryInc/monologue-toolkit/main/install.sh | sh
+```
+
+Or install with Go:
+
+```bash
+go install github.com/EveryInc/monologue-toolkit/cli/cmd/monologue@latest
+```
 
 Run onboarding once to save your token:
 

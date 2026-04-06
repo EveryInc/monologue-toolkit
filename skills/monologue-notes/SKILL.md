@@ -19,7 +19,7 @@ This skill is intentionally shell-first so it works across agents that can run t
 If the `monologue` CLI is missing, install it:
 
 ```bash
-go install github.com/EveryInc/monologue-toolkit/cli/cmd/monologue@latest
+curl -fsSL https://raw.githubusercontent.com/EveryInc/monologue-toolkit/main/install.sh | sh
 ```
 
 If credentials are not configured yet, run onboarding:
@@ -50,7 +50,7 @@ monologue notes get note_123 --field transcript
 
 ## Workflow
 
-1. If the CLI is missing, install it with `go install`.
+1. If the CLI is missing, install it.
 2. If the user is not onboarded yet, run `monologue onboarding`.
 3. Use `list` to find relevant notes.
 4. Use `all` when the request spans more than one page.
@@ -74,3 +74,4 @@ monologue notes get note_123 --field transcript
 - Use ISO 8601 timestamps for `created-after`, `created-before`, and `updated-after`.
 - Prefer the CLI over ad hoc `curl` so auth, errors, and pagination stay consistent.
 - Skill installation itself should not be treated as a post-install execution hook. Install the CLI and run onboarding on first use instead.
+
