@@ -168,6 +168,17 @@ npx skills check
 npx skills update
 ```
 
+### Alternative skill: lightweight, direct API instructions
+
+As an alternative to installing the CLI and the matching skill, you can install [this skill](https://skills.sh/intellectronica/agent-skills/monologue-notes-api) which only includes directions
+for an agent to call the API directly. You can use this skill to get an agent to make calls to the API using `curl` or by
+writing an ad-hoc script.
+
+```bash
+npx skills add https://github.com/intellectronica/agent-skills --skill monologue-notes-api
+export MONOLOGUE_API_KEY="..."
+```
+
 ## Repository layout
 
 ```text
