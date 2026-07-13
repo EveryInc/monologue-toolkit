@@ -96,6 +96,69 @@ func TestListAllNotesFollowsCursorPagination(t *testing.T) {
 	}
 }
 
+func TestListNotesDecodesTags(t *testing.T) {
+	t.Parallel()
+
+	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		writer.Header().Set("Content-Type", "application/json")
+		_, _ = writer.Write([]byte(`{
+			"items": [{
+				"note_id": "note_1",
+				"title": "Planning note",
+				"summary": null,
+				"tags": [{"tag_id": "tag_1", "name": "Planning", "source": "auto", "confidence": 0.9}],
+				"created_at": "2026-07-13T00:00:00Z",
+				"updated_at": "2026-07-13T00:00:00Z"
+			}],
+			"next_cursor": null
+		}`))
+	}))
+	defer server.Close()
+
+	client := NewClient(server.URL, "mono_pat_test", server.Client())
+	response, err := client.ListNotes(context.Background(), ListNotesParams{})
+	if err != nil {
+		t.Fatalf("ListNotes returned error: %v", err)
+	}
+	if len(response.Items) != 1 || len(response.Items[0].Tags) != 1 {
+		t.Fatalf("unexpected items: %#v", response.Items)
+	}
+	if got := response.Items[0].Tags[0]; got.TagID != "tag_1" || got.Name != "Planning" {
+		t.Fatalf("unexpected tag: %#v", got)
+	}
+}
+
+func TestGetNoteDecodesTags(t *testing.T) {
+	t.Parallel()
+
+	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		writer.Header().Set("Content-Type", "application/json")
+		_, _ = writer.Write([]byte(`{
+			"note_id": "note_1",
+			"title": "Meeting note",
+			"summary": null,
+			"transcript": null,
+			"transcript_segments": null,
+			"tags": [{"tag_id": "tag_2", "name": "Meetings", "source": "user", "confidence": null}],
+			"created_at": "2026-07-13T00:00:00Z",
+			"updated_at": "2026-07-13T00:00:00Z"
+		}`))
+	}))
+	defer server.Close()
+
+	client := NewClient(server.URL, "mono_pat_test", server.Client())
+	note, err := client.GetNote(context.Background(), "note_1")
+	if err != nil {
+		t.Fatalf("GetNote returned error: %v", err)
+	}
+	if len(note.Tags) != 1 {
+		t.Fatalf("unexpected tags: %#v", note.Tags)
+	}
+	if got := note.Tags[0]; got.TagID != "tag_2" || got.Name != "Meetings" {
+		t.Fatalf("unexpected tag: %#v", got)
+	}
+}
+
 func writeJSON(t *testing.T, writer http.ResponseWriter, value interface{}) {
 	t.Helper()
 
