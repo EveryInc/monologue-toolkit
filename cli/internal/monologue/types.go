@@ -6,6 +6,7 @@ type ListNotesParams struct {
 	Limit         int
 	Cursor        string
 	Query         string
+	TagIDs        []string
 	CreatedAfter  string
 	CreatedBefore string
 	UpdatedAfter  string
@@ -17,12 +18,13 @@ type NoteTag struct {
 }
 
 type NoteListItem struct {
-	NoteID    string    `json:"note_id"`
-	Title     *string   `json:"title"`
-	Summary   *string   `json:"summary"`
-	Tags      []NoteTag `json:"tags"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
+	NoteID     string     `json:"note_id"`
+	Title      *string    `json:"title"`
+	Summary    *string    `json:"summary"`
+	Tags       []NoteTag  `json:"tags"`
+	RecordedAt *time.Time `json:"recorded_at"`
+	CreatedAt  time.Time  `json:"created_at"`
+	UpdatedAt  time.Time  `json:"updated_at"`
 }
 
 type NoteListResponse struct {
@@ -37,6 +39,7 @@ type Note struct {
 	Transcript         *string     `json:"transcript"`
 	TranscriptSegments interface{} `json:"transcript_segments"`
 	Tags               []NoteTag   `json:"tags"`
+	RecordedAt         *time.Time  `json:"recorded_at"`
 	CreatedAt          time.Time   `json:"created_at"`
 	UpdatedAt          time.Time   `json:"updated_at"`
 }

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Voice Inbox"
+  short_description: "Process voice notes into clear next steps"
+  default_prompt: "Use $voice-inbox to organize my recent Monologue notes into sourced decisions, tasks, ideas, questions, and follow-ups."

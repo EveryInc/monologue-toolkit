@@ -1,0 +1,4 @@
+interface:
+  display_name: "Customer Call to Product Work"
+  short_description: "Turn a customer call into product work"
+  default_prompt: "Use $customer-call-to-product-work to turn my latest relevant customer call into an evidence-backed product-work draft."

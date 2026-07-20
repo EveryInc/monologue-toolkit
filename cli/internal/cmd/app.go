@@ -69,6 +69,11 @@ func runNotesList(args []string, stdout io.Writer, stderr io.Writer) int {
 	limit := fs.Int("limit", 20, "Maximum number of notes to return")
 	cursor := fs.String("cursor", "", "Opaque pagination cursor")
 	query := fs.String("q", "", "Search query across titles, summaries, and transcripts")
+	var tagIDs []string
+	fs.Func("tag-id", "Filter by tag UUID; repeat to include multiple tags", func(value string) error {
+		tagIDs = append(tagIDs, value)
+		return nil
+	})
 	createdAfter := fs.String("created-after", "", "Filter notes created after this ISO 8601 timestamp")
 	createdBefore := fs.String("created-before", "", "Filter notes created before this ISO 8601 timestamp")
 	updatedAfter := fs.String("updated-after", "", "Filter notes updated after this ISO 8601 timestamp")
@@ -85,6 +90,7 @@ func runNotesList(args []string, stdout io.Writer, stderr io.Writer) int {
 		Limit:         *limit,
 		Cursor:        *cursor,
 		Query:         *query,
+		TagIDs:        tagIDs,
 		CreatedAfter:  *createdAfter,
 		CreatedBefore: *createdBefore,
 		UpdatedAfter:  *updatedAfter,
@@ -108,6 +114,11 @@ func runNotesAll(args []string, stdout io.Writer, stderr io.Writer) int {
 	limit := fs.Int("limit", 100, "Maximum number of notes to request per page")
 	cursor := fs.String("cursor", "", "Opaque pagination cursor to resume from")
 	query := fs.String("q", "", "Search query across titles, summaries, and transcripts")
+	var tagIDs []string
+	fs.Func("tag-id", "Filter by tag UUID; repeat to include multiple tags", func(value string) error {
+		tagIDs = append(tagIDs, value)
+		return nil
+	})
 	createdAfter := fs.String("created-after", "", "Filter notes created after this ISO 8601 timestamp")
 	createdBefore := fs.String("created-before", "", "Filter notes created before this ISO 8601 timestamp")
 	updatedAfter := fs.String("updated-after", "", "Filter notes updated after this ISO 8601 timestamp")
@@ -124,6 +135,7 @@ func runNotesAll(args []string, stdout io.Writer, stderr io.Writer) int {
 		Limit:         *limit,
 		Cursor:        *cursor,
 		Query:         *query,
+		TagIDs:        tagIDs,
 		CreatedAfter:  *createdAfter,
 		CreatedBefore: *createdBefore,
 		UpdatedAfter:  *updatedAfter,
@@ -145,11 +157,30 @@ func runNotesGet(args []string, stdout io.Writer, stderr io.Writer) int {
 	baseURL := fs.String("base-url", "", "Monologue API base URL")
 	token := fs.String("token", "", "Monologue Notes API token")
 	field := fs.String("field", "", "Optional top-level or dotted JSON field to extract")
-	if err := fs.Parse(args); err != nil {
+
+	// The standard flag package stops parsing at the first positional argument.
+	// Accept the documented command in either natural ordering:
+	//
+	//   monologue notes get NOTE_ID --field transcript
+	//   monologue notes get --field transcript NOTE_ID
+	//
+	noteID := ""
+	flagArgs := args
+	if len(args) > 0 && !strings.HasPrefix(args[0], "-") {
+		noteID = args[0]
+		flagArgs = args[1:]
+	}
+	if err := fs.Parse(flagArgs); err != nil {
 		return 2
 	}
 
-	if fs.NArg() != 1 {
+	if noteID == "" && fs.NArg() == 1 {
+		noteID = fs.Arg(0)
+	} else if fs.NArg() != 0 {
+		fmt.Fprintln(stderr, "usage: monologue notes get NOTE_ID [--field transcript]")
+		return 1
+	}
+	if noteID == "" {
 		fmt.Fprintln(stderr, "usage: monologue notes get NOTE_ID [--field transcript]")
 		return 1
 	}
@@ -159,7 +190,7 @@ func runNotesGet(args []string, stdout io.Writer, stderr io.Writer) int {
 		return 1
 	}
 
-	note, err := client.GetNote(context.Background(), fs.Arg(0))
+	note, err := client.GetNote(context.Background(), noteID)
 	if err != nil {
 		return writeError(stderr, err)
 	}
@@ -193,7 +224,7 @@ func newClient(baseURLFlag string, tokenFlag string, stderr io.Writer) (*monolog
 		return nil, false
 	}
 	if cfg.Token == "" {
-		fmt.Fprintln(stderr, "No Monologue API token found. Run `monologue onboarding` or pass --token.")
+		fmt.Fprintln(stderr, "No Monologue API token found. Run `monologue onboarding` in your terminal.")
 		return nil, false
 	}
 

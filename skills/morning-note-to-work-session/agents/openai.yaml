@@ -1,0 +1,4 @@
+interface:
+  display_name: "Morning Note to Work Session"
+  short_description: "Turn a morning note into a focused work brief"
+  default_prompt: "Use $morning-note-to-work-session to turn my latest relevant morning note into a focused work brief and recommend the first task."

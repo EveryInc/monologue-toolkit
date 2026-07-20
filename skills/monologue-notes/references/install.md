@@ -18,22 +18,22 @@ go install github.com/EveryInc/monologue-toolkit/cli/cmd/monologue@latest
 
 ## Onboarding
 
+The user must run this command in their own interactive terminal:
+
 ```bash
 monologue onboarding
 ```
 
-For agent-driven or non-interactive setup:
-
-```bash
-monologue onboarding --token "mono_pat_..."
-```
-
 The CLI stores credentials in your user config directory under `monologue/config.json`.
 
-Environment overrides still work when needed:
+An agent must never ask for the token in chat or put it in a command, tool call,
+log, or response. If onboarding is required, pause and wait for the user to
+confirm that the interactive command completed. There is intentionally no
+agent-driven or non-interactive onboarding flow.
+
+For development against another environment, the user may override only the
+base URL without exposing credentials:
 
 ```bash
-export MONOLOGUE_API_TOKEN="mono_pat_..."
 export MONOLOGUE_API_BASE_URL="https://api.monologue.to"
 ```
-

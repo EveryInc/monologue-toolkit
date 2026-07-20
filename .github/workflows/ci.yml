@@ -21,6 +21,8 @@ jobs:
       - name: Run tests
         run: go test ./...
 
+      - name: Validate skill packages
+        run: scripts/validate-skills.sh
+
       - name: Check installer script syntax
         run: bash -n install.sh
-

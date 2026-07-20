@@ -1,0 +1,4 @@
+interface:
+  display_name: "Clean Transcript"
+  short_description: "Clean transcripts without changing meaning"
+  default_prompt: "Use $clean-transcript to clean this transcript in Standard mode while preserving meaning, uncertainty, speakers, and technical details."
