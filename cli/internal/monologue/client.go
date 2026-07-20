@@ -59,6 +59,11 @@ func (c *Client) ListNotes(ctx context.Context, params ListNotesParams) (NoteLis
 	if params.Query != "" {
 		query.Set("q", params.Query)
 	}
+	for _, tagID := range params.TagIDs {
+		if tagID != "" {
+			query.Add("tag_id", tagID)
+		}
+	}
 	if params.CreatedAfter != "" {
 		query.Set("created_after", params.CreatedAfter)
 	}

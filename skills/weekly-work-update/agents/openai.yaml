@@ -1,0 +1,4 @@
+interface:
+  display_name: "Weekly Work Update"
+  short_description: "Draft a sourced update from voice notes"
+  default_prompt: "Use $weekly-work-update to draft an evidence-backed update for this week from my Monologue notes."

@@ -34,7 +34,7 @@ func runOnboarding(args []string, stdin io.Reader, stdout io.Writer, stderr io.W
 	finalToken := strings.TrimSpace(*token)
 	if finalToken == "" {
 		if !isInteractiveReader(stdin) {
-			fmt.Fprintln(stderr, "No interactive terminal detected. Re-run with --token or set MONOLOGUE_API_TOKEN.")
+			fmt.Fprintln(stderr, "No interactive terminal detected. Open a terminal and run `monologue onboarding` yourself.")
 			return 1
 		}
 

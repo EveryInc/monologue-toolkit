@@ -1,0 +1,4 @@
+interface:
+  display_name: "Topic Synthesis"
+  short_description: "Trace a topic across Monologue notes"
+  default_prompt: "Use $topic-synthesis to trace what I have said about this topic across my Monologue notes, with contradictions and a dated source trail."

@@ -3,9 +3,11 @@ package monologue
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 )
 
 func TestListNotesSendsAuthAndFilters(t *testing.T) {
@@ -28,6 +30,9 @@ func TestListNotesSendsAuthAndFilters(t *testing.T) {
 		if got := query.Get("q"); got != "customer interview" {
 			t.Fatalf("unexpected q: %q", got)
 		}
+		if got := query["tag_id"]; len(got) != 2 || got[0] != "tag_1" || got[1] != "tag_2" {
+			t.Fatalf("unexpected tag_id values: %#v", got)
+		}
 		if got := query.Get("created_after"); got != "2026-01-01T00:00:00Z" {
 			t.Fatalf("unexpected created_after: %q", got)
 		}
@@ -49,12 +54,65 @@ func TestListNotesSendsAuthAndFilters(t *testing.T) {
 		Limit:         10,
 		Cursor:        "cursor_1",
 		Query:         "customer interview",
+		TagIDs:        []string{"tag_1", "tag_2"},
 		CreatedAfter:  "2026-01-01T00:00:00Z",
 		CreatedBefore: "2026-02-01T00:00:00Z",
 		UpdatedAfter:  "2026-01-05T00:00:00Z",
 	})
 	if err != nil {
 		t.Fatalf("ListNotes returned error: %v", err)
+	}
+}
+
+func TestListAndGetNotesDecodeRecordedAt(t *testing.T) {
+	t.Parallel()
+
+	const recordedAt = "2026-07-20T08:15:30Z"
+	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		switch request.URL.Path {
+		case "/v1/public-api/notes":
+			fmt.Fprint(writer, `{"items":[{"note_id":"note_1","recorded_at":"`+recordedAt+`","created_at":"2026-07-20T08:16:00Z","updated_at":"2026-07-20T08:17:00Z"}]}`)
+		case "/v1/public-api/notes/note_1":
+			fmt.Fprint(writer, `{"note_id":"note_1","recorded_at":"`+recordedAt+`","created_at":"2026-07-20T08:16:00Z","updated_at":"2026-07-20T08:17:00Z"}`)
+		default:
+			t.Fatalf("unexpected path: %q", request.URL.Path)
+		}
+	}))
+	defer server.Close()
+
+	client := NewClient(server.URL, "mono_pat_test", server.Client())
+	list, err := client.ListNotes(context.Background(), ListNotesParams{})
+	if err != nil {
+		t.Fatalf("ListNotes returned error: %v", err)
+	}
+	if len(list.Items) != 1 || list.Items[0].RecordedAt == nil || list.Items[0].RecordedAt.Format(time.RFC3339) != recordedAt {
+		t.Fatalf("unexpected list recorded_at: %#v", list.Items)
+	}
+
+	note, err := client.GetNote(context.Background(), "note_1")
+	if err != nil {
+		t.Fatalf("GetNote returned error: %v", err)
+	}
+	if note.RecordedAt == nil || note.RecordedAt.Format(time.RFC3339) != recordedAt {
+		t.Fatalf("unexpected detail recorded_at: %#v", note.RecordedAt)
+	}
+}
+
+func TestListNotesDecodesNullRecordedAt(t *testing.T) {
+	t.Parallel()
+
+	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		fmt.Fprint(writer, `{"items":[{"note_id":"note_1","recorded_at":null,"created_at":"2026-07-20T08:16:00Z","updated_at":"2026-07-20T08:17:00Z"}]}`)
+	}))
+	defer server.Close()
+
+	client := NewClient(server.URL, "mono_pat_test", server.Client())
+	list, err := client.ListNotes(context.Background(), ListNotesParams{})
+	if err != nil {
+		t.Fatalf("ListNotes returned error: %v", err)
+	}
+	if len(list.Items) != 1 || list.Items[0].RecordedAt != nil {
+		t.Fatalf("unexpected list recorded_at: %#v", list.Items)
 	}
 }
 
