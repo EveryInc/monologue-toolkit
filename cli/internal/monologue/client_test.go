@@ -17,6 +17,9 @@ func TestListNotesSendsAuthAndFilters(t *testing.T) {
 		if got := request.Header.Get("Authorization"); got != "Bearer mono_pat_test" {
 			t.Fatalf("unexpected auth header: %q", got)
 		}
+		if got := request.Header.Get("User-Agent"); got != "monologue-toolkit/dev" {
+			t.Fatalf("unexpected user agent: %q", got)
+		}
 		if got := request.URL.Path; got != "/v1/public-api/notes" {
 			t.Fatalf("unexpected path: %q", got)
 		}

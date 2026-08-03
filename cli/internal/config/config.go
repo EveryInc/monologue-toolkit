@@ -98,6 +98,15 @@ func Path() (string, error) {
 	return filepath.Join(configDir, "monologue", "config.json"), nil
 }
 
+func UpdateCheckPath() (string, error) {
+	configPath, err := Path()
+	if err != nil {
+		return "", err
+	}
+
+	return filepath.Join(filepath.Dir(configPath), "update-check.json"), nil
+}
+
 func read(path string) (StoredConfig, error) {
 	payload, err := os.ReadFile(path)
 	if errors.Is(err, os.ErrNotExist) {
