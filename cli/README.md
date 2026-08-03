@@ -5,6 +5,7 @@ The `monologue` binary is a thin Go client for Monologue's public Notes API.
 ## Commands
 
 - `monologue version`
+- `monologue update`
 - `monologue onboarding`
 - `monologue notes list`
 - `monologue notes all`
@@ -35,6 +36,14 @@ credentials are missing, it must pause and ask you to run `monologue onboarding`
 yourself.
 
 Saved config lives in your user config directory under `monologue/config.json`.
+
+The CLI checks GitHub Releases at most once every 24 hours. When a newer
+version is available, it writes a notice to stderr without changing command
+output. Update the installed binary with:
+
+```bash
+monologue update
+```
 
 Environment overrides remain available for trusted automation:
 

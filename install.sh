@@ -130,5 +130,4 @@ echo "Next steps:"
 echo "  1. Make sure $INSTALL_DIR is on your PATH"
 echo "  2. Run: $BINARY_NAME onboarding"
 echo
-echo "To update later, rerun this installer."
-
+echo "To update later, run: $BINARY_NAME update"

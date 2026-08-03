@@ -1,6 +1,9 @@
 package version
 
-import "fmt"
+import (
+	"fmt"
+	"runtime/debug"
+)
 
 var (
 	Version = "dev"
@@ -9,5 +12,17 @@ var (
 )
 
 func String() string {
-	return fmt.Sprintf("monologue %s (commit %s, built %s)", Version, Commit, Date)
+	return fmt.Sprintf("monologue %s (commit %s, built %s)", Current(), Commit, Date)
+}
+
+func Current() string {
+	if Version != "dev" {
+		return Version
+	}
+
+	buildInfo, ok := debug.ReadBuildInfo()
+	if ok && buildInfo.Main.Version != "" && buildInfo.Main.Version != "(devel)" {
+		return buildInfo.Main.Version
+	}
+	return Version
 }

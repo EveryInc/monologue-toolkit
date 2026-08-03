@@ -118,6 +118,7 @@ monologue notes list --limit 5
 
 ```bash
 monologue version
+monologue update
 monologue notes list --limit 10
 monologue notes list --q "customer interview"
 monologue notes all --updated-after 2026-01-01T00:00:00Z
@@ -130,13 +131,16 @@ Use `monologue --help` and `monologue notes --help` for the full command list.
 
 ## Update the CLI
 
-If you installed with the shell or PowerShell installer, rerun the same install command to get the latest release.
+Run the built-in updater:
 
-If you installed with Go, rerun:
-
-```bash
-go install github.com/EveryInc/monologue-toolkit/cli/cmd/monologue@latest
+```console
+$ monologue update
+Updated Monologue CLI from 0.1.0 to v0.2.0.
 ```
+
+The CLI checks for a newer GitHub release at most once every 24 hours. When an
+update is available, it prints a notice to stderr and leaves command output
+unchanged for scripts and agents.
 
 Check the installed version with:
 

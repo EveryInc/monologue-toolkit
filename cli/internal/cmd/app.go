@@ -7,13 +7,23 @@ import (
 	"fmt"
 	"io"
 	"strings"
+	"time"
 
 	"github.com/EveryInc/monologue-toolkit/cli/internal/config"
 	"github.com/EveryInc/monologue-toolkit/cli/internal/monologue"
+	cliupdate "github.com/EveryInc/monologue-toolkit/cli/internal/update"
 	"github.com/EveryInc/monologue-toolkit/cli/internal/version"
 )
 
+var (
+	checkForUpdate = cliupdate.CheckForUpdate
+	updateCLI      = cliupdate.Update
+)
+
 func Run(args []string, stdin io.Reader, stdout io.Writer, stderr io.Writer) int {
+	if len(args) == 0 || args[0] != "update" {
+		maybeWarnAboutUpdate(stderr)
+	}
 	if len(args) == 0 {
 		printRootUsage(stderr)
 		return 1
@@ -25,6 +35,8 @@ func Run(args []string, stdin io.Reader, stdout io.Writer, stderr io.Writer) int
 		return 0
 	case "onboarding":
 		return runOnboarding(args[1:], stdin, stdout, stderr)
+	case "update":
+		return runUpdate(args[1:], stdout, stderr)
 	case "notes":
 		return runNotes(args[1:], stdin, stdout, stderr)
 	case "-h", "--help", "help":
@@ -35,6 +47,50 @@ func Run(args []string, stdin io.Reader, stdout io.Writer, stderr io.Writer) int
 		printRootUsage(stderr)
 		return 1
 	}
+}
+
+func maybeWarnAboutUpdate(stderr io.Writer) {
+	currentVersion := version.Current()
+	cachePath, err := config.UpdateCheckPath()
+	if err != nil {
+		return
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+	latestVersion, outdated, err := checkForUpdate(ctx, currentVersion, cachePath)
+	if err != nil || !outdated {
+		return
+	}
+	fmt.Fprintf(stderr, "A newer Monologue CLI version is available (%s; you are using %s). Run `monologue update` to update.\n", latestVersion, currentVersion)
+}
+
+func runUpdate(args []string, stdout io.Writer, stderr io.Writer) int {
+	fs := newFlagSet("monologue update", stderr)
+	if err := fs.Parse(args); err != nil {
+		return 2
+	}
+	if fs.NArg() != 0 {
+		fmt.Fprintln(stderr, "usage: monologue update")
+		return 1
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
+	defer cancel()
+	result, err := updateCLI(ctx, version.Current())
+	if err != nil {
+		fmt.Fprintf(stderr, "update failed: %v\n", err)
+		return 1
+	}
+	if !result.Updated {
+		fmt.Fprintf(stdout, "Monologue CLI is already up to date (%s).\n", result.CurrentVersion)
+		return 0
+	}
+	if result.PendingRestart {
+		fmt.Fprintf(stdout, "Monologue CLI %s is downloaded and will finish updating when this command exits.\n", result.LatestVersion)
+		return 0
+	}
+	fmt.Fprintf(stdout, "Updated Monologue CLI from %s to %s.\n", result.CurrentVersion, result.LatestVersion)
+	return 0
 }
 
 func runNotes(args []string, stdin io.Reader, stdout io.Writer, stderr io.Writer) int {
@@ -296,10 +352,12 @@ func printRootUsage(writer io.Writer) {
 
 Usage:
   monologue onboarding [flags]
+  monologue update
   monologue notes <command> [flags]
 
 Commands:
   version          Show the installed CLI version
+  update           Update the CLI to the latest release
   onboarding       Save and verify Monologue API credentials
   notes onboarding Alias for onboarding
   notes list       List one page of notes

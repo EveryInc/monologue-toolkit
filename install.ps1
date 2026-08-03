@@ -61,8 +61,7 @@ try {
   Write-Host "  1. Add $InstallDir to your PATH if needed"
   Write-Host "  2. Run: monologue onboarding"
   Write-Host ""
-  Write-Host "To update later, rerun this installer."
+  Write-Host "To update later, run: monologue update"
 } finally {
   Remove-Item -Recurse -Force $tmpDir -ErrorAction SilentlyContinue
 }
-

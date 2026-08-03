@@ -2,13 +2,58 @@ package cmd
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
 	"github.com/EveryInc/monologue-toolkit/cli/internal/monologue"
+	cliupdate "github.com/EveryInc/monologue-toolkit/cli/internal/update"
+	"github.com/EveryInc/monologue-toolkit/cli/internal/version"
 )
+
+func TestRunWarnsOnStaleVersionWithoutChangingStdout(t *testing.T) {
+	originalVersion := version.Version
+	originalCheck := checkForUpdate
+	version.Version = "0.1.0"
+	checkForUpdate = func(context.Context, string, string) (string, bool, error) {
+		return "v0.2.0", true, nil
+	}
+	t.Cleanup(func() {
+		version.Version = originalVersion
+		checkForUpdate = originalCheck
+	})
+
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	if exitCode := Run([]string{"version"}, bytes.NewReader(nil), &stdout, &stderr); exitCode != 0 {
+		t.Fatalf("Run returned %d", exitCode)
+	}
+	if got, want := stdout.String(), "monologue 0.1.0 (commit none, built unknown)\n"; got != want {
+		t.Fatalf("unexpected stdout: got %q, want %q", got, want)
+	}
+	if got, want := stderr.String(), "A newer Monologue CLI version is available (v0.2.0; you are using 0.1.0). Run `monologue update` to update.\n"; got != want {
+		t.Fatalf("unexpected stderr: got %q, want %q", got, want)
+	}
+}
+
+func TestRunUpdateReportsSuccess(t *testing.T) {
+	originalUpdate := updateCLI
+	updateCLI = func(context.Context, string) (cliupdate.Result, error) {
+		return cliupdate.Result{CurrentVersion: "0.1.0", LatestVersion: "v0.2.0", Updated: true}, nil
+	}
+	t.Cleanup(func() { updateCLI = originalUpdate })
+
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	if exitCode := Run([]string{"update"}, bytes.NewReader(nil), &stdout, &stderr); exitCode != 0 {
+		t.Fatalf("Run returned %d, stderr: %s", exitCode, stderr.String())
+	}
+	if got, want := stdout.String(), "Updated Monologue CLI from 0.1.0 to v0.2.0.\n"; got != want {
+		t.Fatalf("unexpected stdout: got %q, want %q", got, want)
+	}
+}
 
 func TestRunNotesGetAcceptsFieldBeforeOrAfterNoteID(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {

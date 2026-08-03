@@ -9,9 +9,9 @@ import (
 	"net/url"
 	"strings"
 	"time"
-)
 
-const userAgent = "monologue-toolkit/0.1"
+	"github.com/EveryInc/monologue-toolkit/cli/internal/version"
+)
 
 type Client struct {
 	baseURL    string
@@ -136,7 +136,7 @@ func (c *Client) doJSON(ctx context.Context, method string, endpoint string, out
 
 	request.Header.Set("Accept", "application/json")
 	request.Header.Set("Authorization", "Bearer "+c.token)
-	request.Header.Set("User-Agent", userAgent)
+	request.Header.Set("User-Agent", "monologue-toolkit/"+version.Current())
 
 	response, err := c.httpClient.Do(request)
 	if err != nil {
