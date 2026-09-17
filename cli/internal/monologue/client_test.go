@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 )
@@ -223,5 +224,72 @@ func writeJSON(t *testing.T, writer http.ResponseWriter, value interface{}) {
 	writer.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(writer).Encode(value); err != nil {
 		t.Fatalf("encode response: %v", err)
+	}
+}
+
+func TestGetNoteRecordingMetadata(t *testing.T) {
+	t.Parallel()
+	for _, metadata := range []string{
+		`"recording_url":"https://storage.example/audio","recording_url_expires_at":"2026-09-17T09:00:00Z","recording_content_type":"audio/mp4","recording_bytes":123456`,
+		`"recording_url":"https://storage.example/audio","recording_url_expires_at":"2026-09-17T09:00:00Z","recording_content_type":null,"recording_bytes":null`,
+		`"transcript":"older response"`,
+	} {
+		t.Run(metadata, func(t *testing.T) {
+			server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+				fmt.Fprint(writer, `{"note_id":"note_1",`+metadata+`}`)
+			}))
+			defer server.Close()
+			note, err := NewClient(server.URL, "mono_pat_test", server.Client()).GetNote(context.Background(), "note_1")
+			if err != nil {
+				t.Fatal(err)
+			}
+			if note.Transcript != nil {
+				if note.RecordingURL != nil || note.RecordingURLExpiresAt != nil {
+					t.Fatal("older responses should not invent recording metadata")
+				}
+				return
+			}
+			if note.RecordingURL == nil || *note.RecordingURL != "https://storage.example/audio" || note.RecordingURLExpiresAt == nil || note.RecordingURLExpiresAt.Format(time.RFC3339) != "2026-09-17T09:00:00Z" {
+				t.Fatalf("unexpected recording metadata: %#v", note)
+			}
+			if strings.Contains(metadata, `"recording_bytes":null`) {
+				if note.RecordingBytes != nil || note.RecordingContentType != nil {
+					t.Fatal("expected nullable size and content type")
+				}
+			} else if note.RecordingBytes == nil || *note.RecordingBytes != 123456 || note.RecordingContentType == nil || *note.RecordingContentType != "audio/mp4" {
+				t.Fatal("recording size or content type was lost")
+			}
+		})
+	}
+}
+
+func TestGetNoteAudioURL(t *testing.T) {
+	t.Parallel()
+	for _, status := range []int{200, 401, 403, 404, 422, 500} {
+		t.Run(fmt.Sprint(status), func(t *testing.T) {
+			server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+				if request.Method != http.MethodGet || request.URL.EscapedPath() != "/v1/public-api/notes/note%2F123/audio-url" || request.Header.Get("Authorization") != "Bearer mono_pat_test" {
+					t.Errorf("unexpected request: %s %s", request.Method, request.URL.EscapedPath())
+				}
+				writer.WriteHeader(status)
+				if status == 200 {
+					fmt.Fprint(writer, `{"audio_url":"https://storage.example/audio?signature=test","expires_in":3600}`)
+				} else {
+					fmt.Fprint(writer, `{"detail":"unavailable"}`)
+				}
+			}))
+			defer server.Close()
+			response, err := NewClient(server.URL, "mono_pat_test", server.Client()).GetNoteAudioURL(context.Background(), "note/123")
+			if status == 200 {
+				if err != nil || response.AudioURL != "https://storage.example/audio?signature=test" || response.ExpiresIn != 3600 {
+					t.Fatalf("response=%#v error=%v", response, err)
+				}
+			} else {
+				apiErr, ok := err.(*APIError)
+				if !ok || apiErr.StatusCode != status || apiErr.Detail != "unavailable" {
+					t.Fatalf("unexpected error: %v", err)
+				}
+			}
+		})
 	}
 }
