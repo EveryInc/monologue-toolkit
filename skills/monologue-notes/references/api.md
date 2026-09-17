@@ -1,7 +1,7 @@
 # Monologue Public Notes API
 
 Source: `https://api.monologue.to/public-openapi.json`
-Live specification verified: 2026-07-20
+Live specification verified: 2026-09-17
 OpenAPI version: 3.1.0
 API version: 0.1.0
 
@@ -82,6 +82,13 @@ The response contains the list-item fields plus:
 
 - `transcript`: full transcript string or `null`
 - `transcript_segments`: array of loosely structured JSON objects or `null`
+- `recording_url`: signed download URL for the original uploaded audio
+- `recording_url_expires_at`: UTC ISO 8601 expiry timestamp
+- `recording_content_type`: original MIME type or `null`
+- `recording_bytes`: original file size in bytes or `null`
+
+Recording fields are available on detail responses only. List responses remain
+unchanged. The detail response uses `Cache-Control: no-store`.
 
 Documented errors:
 
@@ -89,6 +96,37 @@ Documented errors:
 - `403`: token is missing the `notes:read` scope
 - `404`: note does not exist for the authenticated user
 - `422`: request validation error
+
+## `GET /v1/public-api/notes/{note_id}/audio-url`
+
+Returns a fresh signed download link for a note owned by the authenticated user.
+Uses the same `notes:read` scope and documented errors as note detail.
+
+```json
+{
+  "audio_url": "https://storage.example/recording?signature=example",
+  "expires_in": 3600
+}
+```
+
+Use `monologue notes audio-url NOTE_ID` (CLI v0.3.0 or later), or add
+`--field audio_url` to extract just the link. The response uses
+`Cache-Control: no-store`.
+
+Links currently expire after one hour. Retrieve a fresh link when needed. The
+original format is preserved; the endpoint does not transcode or clean up audio.
+Content type and byte count may be unknown. Links may be issued before transcript
+processing completes. Presigning does not verify that the stored object exists;
+handle failures when downloading separately from API errors.
+
+Anyone holding a signed link can download the recording until expiry, including
+after the API key is revoked. Do not log or share these links, and do not send
+the API token to the storage URL. For an authorized local download after onboarding:
+
+```bash
+recording_url="$(monologue notes audio-url NOTE_ID --field audio_url)" &&
+  curl --fail --location --output recording.audio "$recording_url"
+```
 
 ## Retrieval notes
 

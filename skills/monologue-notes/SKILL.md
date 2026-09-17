@@ -1,6 +1,6 @@
 ---
 name: "monologue-notes"
-description: "Use when you need to read Monologue notes through the public API, search and list a user's notes, fetch a specific note, paginate through all notes, or pull transcripts and summaries through the Monologue CLI."
+description: "Use when you need to read Monologue notes through the public API, search and list a user's notes, fetch a specific note, paginate through all notes, or pull transcripts, summaries, and original recording links through the Monologue CLI."
 ---
 
 # Monologue Notes
@@ -11,6 +11,7 @@ The current public surface is:
 
 - `GET /v1/public-api/notes`
 - `GET /v1/public-api/notes/{note_id}`
+- `GET /v1/public-api/notes/{note_id}/audio-url`
 
 This skill is intentionally shell-first so it works across agents that can run terminal commands, including Codex and Claude Code.
 
@@ -48,7 +49,16 @@ monologue notes all --updated-after 2026-01-01T00:00:00Z
 monologue notes get note_123
 monologue notes get note_123 --field transcript
 monologue notes get --field summary note_123
+monologue notes get note_123 --field recording_url
+monologue notes audio-url note_123 --field audio_url
 ```
+
+Recording access requires CLI v0.3.0 or later. `notes get` includes the original
+recording link, UTC expiry, content type, and byte count. `notes audio-url` returns
+a fresh link with its lifetime in seconds. List output is unchanged. Fetch or
+download recordings only when relevant to the user's request. Signed links grant
+access without an API token until expiry; keep them out of shared responses and
+logs. Read `references/api.md` for download and expiry behavior.
 
 ## Retrieval protocol
 

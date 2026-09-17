@@ -11,6 +11,7 @@ The CLI and `monologue-notes` foundation skill provide read-only access to the p
 - search notes
 - fetch a specific note
 - pull summaries and transcripts
+- access original recording links and refresh them when they expire
 
 Six workflow skills turn that source material into focused work: starting the day, processing a voice inbox, synthesizing a topic, drafting a weekly update, cleaning a transcript, and translating a customer call into product work.
 
@@ -18,7 +19,7 @@ Six workflow skills turn that source material into focused work: starting the da
 
 | Skill | Scope | Use it to |
 | --- | --- | --- |
-| `monologue-notes` | Access | Find and read notes, summaries, and transcripts |
+| `monologue-notes` | Access | Find and read notes, summaries, transcripts, and original recordings |
 | `morning-note-to-work-session` | Single note | Turn the latest morning note into a focused work session |
 | `customer-call-to-product-work` | Single note + tools | Turn verified customer evidence into a bug report, issue draft, or implementation plan |
 | `topic-synthesis` | Multiple notes | Synthesize an idea across multiple notes with a source trail |
@@ -260,6 +261,6 @@ After that, the no-Go install commands above will work for end users.
 ## Current limitations
 
 - The public Notes API and Monologue CLI are currently read-only.
-- The current public API surface is notes list and note detail retrieval.
+- The public API supports notes list, note detail, and recording download links.
 - Workflow skills can inspect other tools already available to an agent, but must ask before creating or changing anything outside Monologue.
 - The no-Go installer depends on GitHub Releases existing for the requested version.

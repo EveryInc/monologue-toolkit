@@ -50,8 +50,8 @@ func runNotes(args []string, stdin io.Reader, stdout io.Writer, stderr io.Writer
 		return runNotesList(args[1:], stdout, stderr)
 	case "all":
 		return runNotesAll(args[1:], stdout, stderr)
-	case "get":
-		return runNotesGet(args[1:], stdout, stderr)
+	case "get", "audio-url":
+		return runNotesRead(args[0], args[1:], stdout, stderr)
 	case "-h", "--help", "help":
 		printNotesUsage(stdout)
 		return 0
@@ -152,8 +152,8 @@ func runNotesAll(args []string, stdout io.Writer, stderr io.Writer) int {
 	return 0
 }
 
-func runNotesGet(args []string, stdout io.Writer, stderr io.Writer) int {
-	fs := newFlagSet("monologue notes get", stderr)
+func runNotesRead(command string, args []string, stdout io.Writer, stderr io.Writer) int {
+	fs := newFlagSet("monologue notes "+command, stderr)
 	baseURL := fs.String("base-url", "", "Monologue API base URL")
 	token := fs.String("token", "", "Monologue Notes API token")
 	field := fs.String("field", "", "Optional top-level or dotted JSON field to extract")
@@ -177,11 +177,11 @@ func runNotesGet(args []string, stdout io.Writer, stderr io.Writer) int {
 	if noteID == "" && fs.NArg() == 1 {
 		noteID = fs.Arg(0)
 	} else if fs.NArg() != 0 {
-		fmt.Fprintln(stderr, "usage: monologue notes get NOTE_ID [--field transcript]")
+		fmt.Fprintf(stderr, "usage: monologue notes %s NOTE_ID [--field FIELD]\n", command)
 		return 1
 	}
 	if noteID == "" {
-		fmt.Fprintln(stderr, "usage: monologue notes get NOTE_ID [--field transcript]")
+		fmt.Fprintf(stderr, "usage: monologue notes %s NOTE_ID [--field FIELD]\n", command)
 		return 1
 	}
 
@@ -190,20 +190,26 @@ func runNotesGet(args []string, stdout io.Writer, stderr io.Writer) int {
 		return 1
 	}
 
-	note, err := client.GetNote(context.Background(), noteID)
+	var response interface{}
+	var err error
+	if command == "audio-url" {
+		response, err = client.GetNoteAudioURL(context.Background(), noteID)
+	} else {
+		response, err = client.GetNote(context.Background(), noteID)
+	}
 	if err != nil {
 		return writeError(stderr, err)
 	}
 
 	if *field == "" {
-		if err := writePrettyJSON(stdout, note); err != nil {
+		if err := writePrettyJSON(stdout, response); err != nil {
 			fmt.Fprintf(stderr, "write response: %v\n", err)
 			return 1
 		}
 		return 0
 	}
 
-	value, ok := extractJSONPath(note, *field)
+	value, ok := extractJSONPath(response, *field)
 	if !ok {
 		fmt.Fprintf(stderr, "field not found: %s\n", *field)
 		return 1
@@ -304,7 +310,8 @@ Commands:
   notes onboarding Alias for onboarding
   notes list       List one page of notes
   notes all        Fetch all matching notes across pagination
-  notes get        Fetch one note by id
+  notes get        Fetch one note by id, including its recording link
+  notes audio-url  Get a fresh recording download link
 
 Environment:
   MONOLOGUE_API_TOKEN
@@ -318,6 +325,7 @@ func printNotesUsage(writer io.Writer) {
   monologue notes onboarding [flags]
   monologue notes list [flags]
   monologue notes all [flags]
-  monologue notes get NOTE_ID [--field transcript]
+  monologue notes get NOTE_ID [--field FIELD]
+  monologue notes audio-url NOTE_ID [--field audio_url]
 `)
 }

@@ -128,6 +128,17 @@ func (c *Client) GetNote(ctx context.Context, noteID string) (Note, error) {
 	return response, nil
 }
 
+func (c *Client) GetNoteAudioURL(ctx context.Context, noteID string) (NoteAudioURLResponse, error) {
+	endpoint := fmt.Sprintf("%s/v1/public-api/notes/%s/audio-url", c.baseURL, url.PathEscape(noteID))
+
+	var response NoteAudioURLResponse
+	if err := c.doJSON(ctx, http.MethodGet, endpoint, &response); err != nil {
+		return NoteAudioURLResponse{}, err
+	}
+
+	return response, nil
+}
+
 func (c *Client) doJSON(ctx context.Context, method string, endpoint string, out interface{}) error {
 	request, err := http.NewRequestWithContext(ctx, method, endpoint, nil)
 	if err != nil {
